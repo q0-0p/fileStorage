@@ -6,14 +6,13 @@ const path = require('path');
 const hbs = require('handlebars');
 const port = process.env.PORT || 3000;
 const consolidate = require('consolidate');
-
+const util = require('util');
 
 
 var app = express();
 
 var folders = [];
 var folders = fs.readdirSync('./files/');
-
 app.engine('html', consolidate.handlebars);
 
 
@@ -22,46 +21,23 @@ var folders = [];
 folders = fs.readdirSync('./files/');
 var files = []
 
-// function generateList(extension) {
-//   var ul = document.getElementById("folderList");
-//   var li = document.createElement("li");
-//   li.appendChild(document.createTextNode(extension));
-//   li.setAttribute("id", extension); // added line
-//   ul.appendChild(li);
-//   alert(li.id);
-// }
 
-
-
-app.get('/upload', (req, res) => {
-
-  res.render('upload.html');
-
-
-
-
-
-  console.log('HERE - upload /');
-
-})
+app.use(express.static('/files/'));
 
 
 
 app.get('/', (req, res) => {
+  //display home page
   var folderListHTML = '';
+  //display list of folders 
   folders.forEach((folderName) => {
     folderListHTML += '<li><a href="/' + folderName + '">' + folderName + '</a></li>';
   })
-
-
-
+  
   res.render('index.html', { listOfFolders: folderListHTML });
 
-
-
-
 })
-
+//get rid of favicon get
 function ignoreFavicon(req, res, next) {
   if (req.originalUrl === '/favicon.ico') {
     res.status(204).json({ nope: true });
@@ -74,12 +50,13 @@ app.use(ignoreFavicon);
 
 
 var fileList = [];
+
+
+//TODO: fix download
 app.get('/:folder', (req, res, next) => {
   console.log('HERE - FOLDER - ');
 
   var folderUsed = req.params.folder;
-
-
 
 
   var folderListHTML = '';
@@ -89,26 +66,30 @@ app.get('/:folder', (req, res, next) => {
   })
   var fileListHTML = '';
 
-
+  //log the folder used, make sure it matches
   console.log(folders[folders.indexOf(folderUsed)]);
 
+
+  //read the correct directory, get all the files in it
   fs.readdir('./files/' + folderUsed, (err, files) => {
     if (err) {
-      return console.log("reeeeeeeeeeeeee" + err);
+      return console.log("Unable to read directory - " + err);
     }
+
     files.forEach((file) => {
 
       fileList.push(file);
 
     })
-  }
-  )
+    //populate the ul with the correct files
+    fileList.forEach((file) => {
+      fileListHTML += '<li id="' + file + '">' + '<a href="/files/' + folderUsed + '/' + file + '" download="' + file + '">' + file + '</a></li>';
+    })
 
+    res.render('files.html', { folderName: req.params.folder, listOfFolders: folderListHTML, listOfFiles: fileListHTML });
 
-  fileList.forEach((file) => {
-    fileListHTML += '<li id="' + file + '">' + file + '</li>';
   })
-  res.render('files.html', { folderName: req.params.folder, listOfFolders: folderListHTML, listOfFiles: fileListHTML });
+  //reset the files for new page
   fileList = [];
 
 
@@ -117,62 +98,51 @@ app.get('/:folder', (req, res, next) => {
 
 
 
+//post method:
+//check if folder exists ( by checking the extension of the fil inputted), if so , put the file in that folder
+// if the folder doesnt exist, create it
 
 
 app.post('/upload', (req, res, next) => {
 
-
-
-  // var form = new formidable.IncomingForm();
-
-
-  //date to be used for the file name addition
+  //use formidable for files/forms
+  var form = new formidable.IncomingForm();
+  //console.log(form);
+  //date to be used for the file name addition, so as to keep the files unique
   var today = new Date();
   var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
   var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
   var dateTime = date + ' ' + time;
+  //console.log(dateTime);
 
+  form.parse(req, (err, fields, files) => {
+    // console.log(files);
+    // console.log(fields);
+    var oldpath = files.filetoupload.path;
+    var fileExtension = path.extname(files.filetoupload.name);
 
-  // form.parse(req , function (err, fields, files) {
+    var dirExists = fs.existsSync('./files/' + fileExtension.substring(1));
+    var allFolders = [];
 
-  //   var oldpath = files.filetoupload.path;
-  //   var fileExtension = path.extname(files.filetoupload.name);
+    //check if a folder with the extension is available
+    if (!dirExists) {
+      fs.mkdirSync('./files/' + fileExtension.substring(1));
 
+    }
+    var newpath = './files/' + fileExtension.substring(1) + '/' + dateTime.toString() + " " + files.filetoupload.name;
 
-  //   var dirExists = fs.existsSync('./files/' + fileExtension.substring(1));
-  //   var allFolders = [];
+    fs.rename(oldpath, newpath, (err) => {
+      if (err) throw err;
+      res.write('<div>File uploaded into ' + fileExtension.substring(1) + '!</div>' + '<br>');
+      res.write('<a href="/"><input type="button" value="Add another file"></a>');
+      res.end();
+    });
+  });
 
-  //   //check if a folder with the extension is available
-  //   if (!dirExists) {
-  //     fs.mkdirSync('./files/' + fileExtension.substring(1));
-
-  //   }
-  //   var newpath = './files/' + fileExtension.substring(1) + '/' + dateTime.toString() + " " + files.filetoupload.name;
-
-  //   fs.rename(oldpath, newpath, function (err) {
-  //     if (err) throw err;
-  //     res.write('<div>File uploaded into ' + fileExtension.substring(1) + '</div>' + '<br>');
-  //     res.write('<a href="/"><input type="button" value="Add another file"></a>');
-  //     res.end();
-  //   });
-  // });
-
-
-  // form.on('fileBegin', function (name, file) {
-  //   file.path = __dirname + '/uploads/' + file.name;
-  // });
-
-  // form.on('file', function (name, file) {
-  //   console.log('Uploaded ' + file.name);
-  // });
-  // console.log(req);
-  //   res.sendFile(__dirname);
-
-  res.render('upload.html');
 })
 
 
+//server port?
 app.listen(port, () => {
   console.log(`Server is up on port ${port}`);
 });
-

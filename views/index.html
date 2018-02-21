@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>FileStorage</title>
-  </head>
-  <body >
 
-    <ul id="folderList">
-      {{{listOfFolders}}}
+<head>
+  <title>FileStorage</title>
+</head>
 
-    </ul>
-        
+<body>
+  <div> Home: File Upload/Download</div>
+  <ul id="folderList">
+    {{{listOfFolders}}}
 
-    <form method="post" action="/upload">
-          <input type="file" name="filetoupload" required><br>
-           <input type="submit" value="Upload">
-      </form>
+  </ul>
 
-       
-  
-  </body>
+  <form action="/upload" method="post" enctype="multipart/form-data" >
+    <input type="file" name="filetoupload" required>
+    <br>
+    <input type="submit" value="Upload">
+  </form>
+
+
+
+</body>
+
 </html>
