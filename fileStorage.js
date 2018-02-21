@@ -22,18 +22,19 @@ folders = fs.readdirSync('./files/');
 var files = []
 
 
-app.use(express.static('/files/'));
+app.use(express.static('../files'));
 
 
 
 app.get('/', (req, res) => {
+  folders = fs.readdirSync('./files/');
   //display home page
   var folderListHTML = '';
   //display list of folders 
   folders.forEach((folderName) => {
     folderListHTML += '<li><a href="/' + folderName + '">' + folderName + '</a></li>';
   })
-  
+
   res.render('index.html', { listOfFolders: folderListHTML });
 
 })
@@ -52,7 +53,7 @@ app.use(ignoreFavicon);
 var fileList = [];
 
 
-//TODO: fix download
+
 app.get('/:folder', (req, res, next) => {
   console.log('HERE - FOLDER - ');
 
@@ -70,10 +71,19 @@ app.get('/:folder', (req, res, next) => {
   console.log(folders[folders.indexOf(folderUsed)]);
 
 
-  //read the correct directory, get all the files in it
+  //read the correct directory, get all the files in it. If it doesn't exist, run download the file
   fs.readdir('./files/' + folderUsed, (err, files) => {
-    if (err) {
-      return console.log("Unable to read directory - " + err);
+    //TODO: fix if the file has no extension/extension wasn't able to be found
+     if (err) {
+    //   if(!otherDir){
+    //   fs.mkdirSync('./files/other');
+    //   fileListHTML += '<li id="' + file + '">' + '<a href="/files/other/' + file + '" download="' + file + '">' + file + '</a></li>';
+    //   }
+    //   else{
+    //     fileListHTML += '<li id="' + file + '">' + '<a href="/files/other/' + file + '" download="' + file + '">' + file + '</a></li>';
+
+    //   }
+      return console.log("Unable to find extension - added to other " + err);
     }
 
     files.forEach((file) => {
@@ -83,12 +93,12 @@ app.get('/:folder', (req, res, next) => {
     })
     //populate the ul with the correct files
     fileList.forEach((file) => {
-      fileListHTML += '<li id="' + file + '">' + '<a href="/files/' + folderUsed + '/' + file + '" download="' + file + '">' + file + '</a></li>';
+      fileListHTML += '<li id="' + file + '">' + '<a download href="../files/'+folderUsed +'/'+file+'" >' + file + '</a></li>';
     })
 
     res.render('files.html', { folderName: req.params.folder, listOfFolders: folderListHTML, listOfFiles: fileListHTML });
 
-  })
+  }) 
   //reset the files for new page
   fileList = [];
 
@@ -101,8 +111,6 @@ app.get('/:folder', (req, res, next) => {
 //post method:
 //check if folder exists ( by checking the extension of the fil inputted), if so , put the file in that folder
 // if the folder doesnt exist, create it
-
-
 app.post('/upload', (req, res, next) => {
 
   //use formidable for files/forms
