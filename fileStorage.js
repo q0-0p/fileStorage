@@ -28,13 +28,15 @@ app.get('/delete/:files/:folder/:file', (req, res, next) => {
   
   
   fs.unlink(decodeURI(req.originalUrl.substr(8)), (err) => {
+    //if couldn't delete
     if (err) {
       res.write('<div> Could not delete file, '+err+'</div><br>');
       res.write('<a href="/"><input type="button" value="Return home"></a>');
       res.end();
     }
+    //if deleted
     else {
-      console.log('path/file.txt was deleted');
+     console.log('File deleted!')
       res.write('<div>File deleted!</div><br>');
       res.write('<a href="/"><input type="button" value="Return home"></a>');
       res.end();
