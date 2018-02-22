@@ -74,15 +74,8 @@ app.get('/:folder', (req, res, next) => {
   //read the correct directory, get all the files in it. If it doesn't exist, run download the file
   fs.readdir('./files/' + folderUsed, (err, files) => {
     //TODO: fix if the file has no extension/extension wasn't able to be found
-     if (err) {
-    //   if(!otherDir){
-    //   fs.mkdirSync('./files/other');
-    //   fileListHTML += '<li id="' + file + '">' + '<a href="/files/other/' + file + '" download="' + file + '">' + file + '</a></li>';
-    //   }
-    //   else{
-    //     fileListHTML += '<li id="' + file + '">' + '<a href="/files/other/' + file + '" download="' + file + '">' + file + '</a></li>';
-
-    //   }
+    if (err) {
+      res.send(404);
       return console.log("Unable to find extension - added to other " + err);
     }
 
@@ -93,12 +86,13 @@ app.get('/:folder', (req, res, next) => {
     })
     //populate the ul with the correct files
     fileList.forEach((file) => {
-      fileListHTML += '<li id="' + file + '">' + '<a download href="../files/'+folderUsed +'/'+file+'" >' + file + '</a></li>';
+      //var decodedFile = encodeURI(file);
+      fileListHTML += '<li id="' + file + '">' + '<a download href="../files/' + folderUsed + '/' + file + '" >' + file + " " + '</a><i id="' + file + '" class="far fa-trash-alt" style="cursor:pointer" onclick="confirm(\'Are you sure you want to delete this file?\')"></i></li>';
     })
 
     res.render('files.html', { folderName: req.params.folder, listOfFolders: folderListHTML, listOfFiles: fileListHTML });
 
-  }) 
+  })
   //reset the files for new page
   fileList = [];
 
@@ -127,15 +121,35 @@ app.post('/upload', (req, res, next) => {
     // console.log(files);
     // console.log(fields);
     var oldpath = files.filetoupload.path;
-    var fileExtension = path.extname(files.filetoupload.name);
 
+    var fileExtension = path.extname(files.filetoupload.name);
+    //console.log(fileExtension);
     var dirExists = fs.existsSync('./files/' + fileExtension.substring(1));
+
     var allFolders = [];
 
     //check if a folder with the extension is available
     if (!dirExists) {
+
       fs.mkdirSync('./files/' + fileExtension.substring(1));
 
+
+    }
+    if (dirExists && fileExtension === '') {
+      
+      if (!fs.existsSync('./files/other')) {
+          fs.mkdirSync('./files/other');
+      }
+      var newpath = './files/' + 'other' + '/' + dateTime.toString() + " " + files.filetoupload.name;
+
+      fs.rename(oldpath, newpath, (err) => {
+        if (err) throw err;
+        res.write('<div>File uploaded into ' + 'other' + '!</div>' + '<br>');
+        res.write('<a href="/"><input type="button" value="Add another file"></a>');
+        res.end();
+      });
+    return;
+      //fs.mkdirSync('./files/' + fileExtension.substring(1));
     }
     var newpath = './files/' + fileExtension.substring(1) + '/' + dateTime.toString() + " " + files.filetoupload.name;
 
