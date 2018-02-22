@@ -23,8 +23,27 @@ var files = []
 
 
 app.use(express.static('../files'));
+//TODO, change to delete instead of get
+app.get('/delete/:files/:folder/:file', (req, res, next) => {
+  
+  
+  fs.unlink(decodeURI(req.originalUrl.substr(8)), (err) => {
+    if (err) {
+      res.write('<div> Could not delete file, '+err+'</div><br>');
+      res.write('<a href="/"><input type="button" value="Return home"></a>');
+      res.end();
+    }
+    else {
+      console.log('path/file.txt was deleted');
+      res.write('<div>File deleted!</div><br>');
+      res.write('<a href="/"><input type="button" value="Return home"></a>');
+      res.end();
+    }
+  });
 
 
+ 
+})
 
 app.get('/', (req, res) => {
   folders = fs.readdirSync('./files/');
@@ -33,11 +52,14 @@ app.get('/', (req, res) => {
   //display list of folders 
   folders.forEach((folderName) => {
     folderListHTML += '<li><a href="/' + folderName + '">' + folderName + '</a></li>';
+
   })
+
 
   res.render('index.html', { listOfFolders: folderListHTML });
 
 })
+
 //get rid of favicon get
 function ignoreFavicon(req, res, next) {
   if (req.originalUrl === '/favicon.ico') {
@@ -75,7 +97,7 @@ app.get('/:folder', (req, res, next) => {
   fs.readdir('./files/' + folderUsed, (err, files) => {
     //TODO: fix if the file has no extension/extension wasn't able to be found
     if (err) {
-      res.send(404);
+      res.sendStatus(404);
       return console.log("Unable to find extension - added to other " + err);
     }
 
@@ -86,8 +108,8 @@ app.get('/:folder', (req, res, next) => {
     })
     //populate the ul with the correct files
     fileList.forEach((file) => {
-      //var decodedFile = encodeURI(file);
-      fileListHTML += '<li id="' + file + '">' + '<a download href="../files/' + folderUsed + '/' + file + '" >' + file + " " + '</a><i id="' + file + '" class="far fa-trash-alt" style="cursor:pointer" onclick="confirm(\'Are you sure you want to delete this file?\')"></i></li>';
+      //var decodedFile = encodeURI(file);<a href="../delete/files/' + folderUsed + '/' + file + ' "></a>
+      fileListHTML += '<li id="' + file + '">' + '<a download href="../files/' + folderUsed + '/' + file + '" >' + file + " " + '</a><i onclick="deleteFile(this.id)" id="../delete/files/' + folderUsed + '/' + file + '" class="far fa-trash-alt" style="cursor:pointer"  ></i></li>';
     })
 
     res.render('files.html', { folderName: req.params.folder, listOfFolders: folderListHTML, listOfFiles: fileListHTML });
@@ -109,21 +131,20 @@ app.post('/upload', (req, res, next) => {
 
   //use formidable for files/forms
   var form = new formidable.IncomingForm();
-  //console.log(form);
+
   //date to be used for the file name addition, so as to keep the files unique
   var today = new Date();
   var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
   var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
   var dateTime = date + ' ' + time;
-  //console.log(dateTime);
+
 
   form.parse(req, (err, fields, files) => {
-    // console.log(files);
-    // console.log(fields);
+
     var oldpath = files.filetoupload.path;
 
     var fileExtension = path.extname(files.filetoupload.name);
-    //console.log(fileExtension);
+
     var dirExists = fs.existsSync('./files/' + fileExtension.substring(1));
 
     var allFolders = [];
@@ -135,21 +156,24 @@ app.post('/upload', (req, res, next) => {
 
 
     }
+    //check if the file used has no extension - for some reason dirExists is true when extension is "", because it checks only for /files/
     if (dirExists && fileExtension === '') {
-      
+
+      //check if other folder exists, if it doesnt make it
       if (!fs.existsSync('./files/other')) {
-          fs.mkdirSync('./files/other');
+        fs.mkdirSync('./files/other');
       }
-      var newpath = './files/' + 'other' + '/' + dateTime.toString() + " " + files.filetoupload.name;
+      //upload file to page "/files/other"
+      var newpath = './files/other/' + dateTime.toString() + " " + files.filetoupload.name;
 
       fs.rename(oldpath, newpath, (err) => {
         if (err) throw err;
-        res.write('<div>File uploaded into ' + 'other' + '!</div>' + '<br>');
+        res.write('<div>File uploaded into other!</div><br>');
         res.write('<a href="/"><input type="button" value="Add another file"></a>');
         res.end();
       });
-    return;
-      //fs.mkdirSync('./files/' + fileExtension.substring(1));
+      return;
+
     }
     var newpath = './files/' + fileExtension.substring(1) + '/' + dateTime.toString() + " " + files.filetoupload.name;
 
@@ -162,6 +186,7 @@ app.post('/upload', (req, res, next) => {
   });
 
 })
+
 
 
 //server port?
