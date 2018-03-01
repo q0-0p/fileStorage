@@ -17,18 +17,6 @@ const util = require('util');
 //save new something
 
 
-
-var addFile= new fileModel({
-  name: 'First file'
-})
-
-
-addFile.save().then((doc)=>{
-  console.log('Saved Vault', doc);
-}, (e) =>{
-  console.log('Unable to save Vault')
-});
-
 var app = express();
 
 var folders = [];

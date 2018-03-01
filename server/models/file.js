@@ -6,6 +6,8 @@ var fileModel = mongoose.model('file',
         //ex: required: true, minlength:1, trim:true, default:false, default:null
         name            :           { type: String },
         fileLocation    :           { type: String },
+        fileDestination :           { type: String },
+        fileUploadDate  :           { type: String },
         ext             :           { type: String }
     });
 
