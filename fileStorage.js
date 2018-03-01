@@ -8,6 +8,26 @@ const port = process.env.PORT || 3000;
 const consolidate = require('consolidate');
 const util = require('util');
 
+//const MongoClient = require('mongodb').MongoClient;
+
+
+
+
+
+//save new something
+
+
+
+var addFile= new fileModel({
+  name: 'First file'
+})
+
+
+addFile.save().then((doc)=>{
+  console.log('Saved Vault', doc);
+}, (e) =>{
+  console.log('Unable to save Vault')
+});
 
 var app = express();
 
@@ -79,7 +99,7 @@ var fileList = [];
 
 
 app.get('/:folder', (req, res, next) => {
-  console.log('HERE - FOLDER - ');
+  
 
   var folderUsed = req.params.folder;
 
@@ -92,12 +112,12 @@ app.get('/:folder', (req, res, next) => {
   var fileListHTML = '';
 
   //log the folder used, make sure it matches
-  console.log(folders[folders.indexOf(folderUsed)]);
+  //console.log(folders[folders.indexOf(folderUsed)]);
 
 
   //read the correct directory, get all the files in it. If it doesn't exist, run download the file
   fs.readdir('./files/' + folderUsed, (err, files) => {
-    //TODO: fix if the file has no extension/extension wasn't able to be found
+    
     if (err) {
       res.sendStatus(404);
       return console.log("Unable to find extension - added to other " + err);
